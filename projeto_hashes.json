@@ -1,0 +1,13 @@
+{
+    "./SockpuppetConfig.py": "b7e319a0143e19b54c7f534eb39068d334108cf0de7ca5d4bff4e7145e075ce6",
+    "./loginSockTikTok.py": "ab8d2da0e58f6793f911a26ac12a08ce030d87dd20458fa44b47fda501302848",
+    "./README.md": "6be7468d9eba517034da9a0980ee038b6760bbe265d2691117a4f62da7036a05",
+    "./requirements.txt": "2af76355aea304f25b6ae7d38de6ca020d2b4263f92986ffd71812e6abceb01a",
+    "./projeto_hashes.json": "b15930f9e926f83757e929743e7c9be17f00b566a52d332915a084da54c987de",
+    "./.gitignore": "334e9166aed6d1ea693dd9a6f0fa9006268d178d57ec1c544931891565b6b728",
+    "./usuario_partido_orientacao_tiktok.txt": "89ae3912b4b5ee4a422144774c71c93d67b2a7222758fc7186e0a23359d13436",
+    "./sockTimeline.py": "6b3c1241a6bdebe98e71f7a870c0da1a7adee76cbf06eebf46390366b8b76f2d",
+    "./seguirUsuariosSock.py": "b95b277ecdeb5e06482c4015014c45d21de7650032c2a3cc601e2d97349a71a7",
+    "./sockpuppetRun.py": "4a7f41d4ee6bd2b892a225969e354a15efe6d41b8c3f7e3273400eace11b73f5",
+    "./config.toml": "782eb485f666b777e68b1104cbec492fa2c9d69c1b7d50c17bd53e8a600a1834"
+}
