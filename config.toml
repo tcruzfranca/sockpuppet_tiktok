@@ -1,0 +1,10 @@
+sockpuppet_name = ""
+snapshots_dir = "./snapshots_"
+sockpuppet_dir = "./navegador_dados_"
+session_file = "./tiktok_session_"
+orientacao = "neutro"
+partidos = ""
+seguindo_usuarios_concluido = false
+arquivo_usuarios_seguir = "usuario_partido_orientacao_tiktok.txt"
+quantidade_intervalos_dormindo = 1
+intervalos_em_segundos = 3600
