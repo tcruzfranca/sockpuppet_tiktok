@@ -48,7 +48,9 @@ def setup_config_file_using_config_object():
 
         # Garante carregamento do arquivo se existir
         if Path(config_path).exists():
-            dados_config = toml.load(config_path)
+            # Leitura com modo "rb"
+            with open(config_path, "rb") as f:
+                dados_config = toml_parser.load(f)
         else:
             dados_config = {}
 
@@ -67,8 +69,9 @@ def setup_config_file_using_config_object():
         dados_config["intervalos_em_segundos"] = config.intervalos_em_segundos
 
         # 3. Abre o arquivo em modo de escrita ('w') e salva as alterações
+        import toml as toml_writer
         with open(config_path, "w", encoding="utf-8") as f:
-            toml.dump(dados_config, f)
+            toml_writer.dump(dados_config, f)
         result = True
         print("Arquivo config.toml atualizado com sucesso!")
     else:

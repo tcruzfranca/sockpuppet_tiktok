@@ -1,5 +1,9 @@
 # Projeto de Auditoria de Timeline
 
+##Chat de orientação
+Acesse, pergunte e oriente o chat para que ele fique mais especializado.
+https://share.gemini.google/mAh58ZcjkTCc
+
 ## Sobre o projeto
 
 Este projeto foi desenvolvido no escopo de uma pesquisa acadêmica voltada à **auditoria de mecanismos de recomendação utilizados na construção da timeline de usuários do TikTok**.

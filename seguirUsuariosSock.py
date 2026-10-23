@@ -23,8 +23,6 @@ else:
     import toml as toml_parser
     TomlError = toml_parser.TomlDecodeError
 
-import toml as toml_writer
-
 # Para salvar o TOML mantendo compatibilidade
 import toml as toml_writer
 
