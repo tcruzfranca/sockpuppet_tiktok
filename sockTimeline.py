@@ -463,7 +463,7 @@ async def main():
         candidatos_pl = [p for p in posts_coletados if p["partido"] == "PL" and p["author"].lower() in CONTAS_VALIDAS_PL]
 
         orientacao = getattr(config, "orientacao", "neutro").lower()
-        partido_alvo = getattr(config, "partido_alvo", "").upper()
+        partido_alvo = getattr(config, "partidos", "").upper()
         nome_sockpuppet = getattr(config, "sockpuppet_name", "padrao")
 
         posts_curtidos_neste_ciclo = []

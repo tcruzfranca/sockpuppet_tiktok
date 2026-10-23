@@ -100,29 +100,36 @@ Recomenda-se verificar também se existe espaço suficiente em disco, pois o pro
 
 # 3. Dependências
 
-O projeto utiliza Python 3 e Playwright.
-Use Python 3.10 ou superior
+O projeto utiliza Python 3 (compatível do Python 3.8 ao 3.12+), Playwright e suporte a TOML multi-versão[cite: 11, 12].
 
-O arquivo `requirements.txt` contém:
+O arquivo `requirements.txt` do projeto contém as seguintes dependências:
 
 ```text
 playwright>=1.40.0
+playwright-stealth>=1.0.6
+tomli>=1.1.0; python_version < "3.14"
 ```
+
 
 Instale as dependências a partir do diretório principal do projeto:
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 Em seguida, instale o navegador Chromium utilizado pelo Playwright:
 
 ```bash
-playwright install chromium
+python -m playwright install chromium
+python -m playwright install-deps
 ```
 
 Por fim, instale as dependências necessárias para execução do Chromium:
 
+```
+sudo apt update
+sudo apt install -y chromium-browser libgbm-dev libnss3 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2
+```
 ```bash
 playwright install-deps
 ```

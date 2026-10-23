@@ -11,10 +11,22 @@ Autores:
 import asyncio
 import random
 import os
-import toml
+import sys
 from typing import List, Optional
 from playwright.async_api import async_playwright
 from SockpuppetConfig import SockpuppetConfig
+# Importação híbrida segura para leitura e escrita em versões distintas do python
+if sys.version_info >= (3, 11):
+    import tomllib as toml_parser
+    TomlError = toml_parser.TOMLDecodeError
+else:
+    import toml as toml_parser
+    TomlError = toml_parser.TomlDecodeError
+
+import toml as toml_writer
+
+# Para salvar o TOML mantendo compatibilidade
+import toml as toml_writer
 
 config: Optional[SockpuppetConfig] = None
 
@@ -53,10 +65,16 @@ def marcar_etapa_seguimento_como_concluida(config_file_path: str):
     """Atualiza a chave 'seguindo_usuarios_concluido = true' no config.toml."""
     try:
         if os.path.exists(config_file_path):
-            dados = toml.load(config_file_path)
+            
+            # Leitura em modo binário "rb" (obrigatório para tomllib)
+            with open(config_file_path, "rb") as f:
+                dados = toml_parser.load(f)
+
             dados["seguindo_usuarios_concluido"] = True
+
             with open(config_file_path, "w", encoding="utf-8") as f:
-                toml.dump(dados, f)
+                toml_writer.dump(dados, f)
+
             print("[✓] Status atualizado: 'seguindo_usuarios_concluido = true' salvo no config.toml.")
     except Exception as e:
         print(f"[-] Erro ao atualizar {config_file_path}: {e}")

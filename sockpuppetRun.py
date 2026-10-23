@@ -14,12 +14,20 @@ Uso restrito aos fins autorizados pelos autores. Veja o README.md.
 """
 
 import asyncio
-import toml
 import loginSockTikTok
 import sockTimeline
 import seguirUsuariosSock  # Importa o novo módulo
+import sys
 from SockpuppetConfig import SockpuppetConfig
 from pathlib import Path
+from playwright.async_api import async_playwright
+
+if sys.version_info >= (3, 11):
+    import tomllib as toml_parser
+    TomlError = toml_parser.TOMLDecodeError
+else:
+    import toml as toml_parser
+    TomlError = toml_parser.TomlDecodeError
 
 
 # ==============================================================================
@@ -52,6 +60,9 @@ def setup_config_file_using_config_object():
         dados_config["session_file"] = config.session_file
         dados_config["orientacao"] = config.orientacao if config.orientacao in ORIENTACOES_VALIDAS else "neutro"
         
+        # SALVA O CAMPO PARTIDOS NO ARCHIVO TOML
+        dados_config["partidos"] = config.partidos
+
         dados_config["quantidade_intervalos_dormindo"] = config.quantidade_intervalos_dormindo
         dados_config["intervalos_em_segundos"] = config.intervalos_em_segundos
 
@@ -67,7 +78,7 @@ def setup_config_file_using_config_object():
 
 
 
-def configure_main_var_names():
+def configure_main_var_names(caminho_arquivo="config.toml"):
 
     global config
     result = False
@@ -77,13 +88,6 @@ def configure_main_var_names():
         config.sockpuppet_dir += config.sockpuppet_name
         config.session_file += config.sockpuppet_name + ".json"
 
-        '''
-            Serão mantidos os valores padrão para o arquivo de configuração e para o intervalo  de coleta.
-        '''
-        '''
-        if((input("usar configuração padrão: (S)Sim, (n)não: ")) == "n")):
-            config.config_file_name = criar_config_file()
-        '''
         setup_config_file_using_config_object()
 
         result = True
@@ -128,6 +132,20 @@ def def_orientacao_sockpuppet():
 
     print(f"[✓] Orientação definida como: '{config.orientacao}'")
 
+    # =========================================================================
+    # NOVA ETAPA: DEFINIÇÃO DOS PARTIDOS
+    # =========================================================================
+    default_partidos = config.partidos.strip().lower() if config.partidos else ""
+    prompt_partidos = f"[{default_partidos}]" if default_partidos else "[vazio/todos]"
+    
+    entrada_partidos = input(f"Informe o(s) partido(s) de interesse (ex: 'pt', 'pl', 'pt,pl') ou ENTER para manter {prompt_partidos}: ").strip().lower()
+
+    if entrada_partidos != "":
+        config.partidos = entrada_partidos
+    else:
+        config.partidos = default_partidos
+
+    print(f"[✓] Partido(s) definido(s) como: '{config.partidos}'")
 
 def def_intervalo_coleta():
 
@@ -196,47 +214,42 @@ def is_dir_existis(dir_name):
 def config_environment_using_config_file(caminho_arquivo = "config.toml"):
 
     global config
+    result = False
 
-    try:
-        result = False
+    if Path(caminho_arquivo).exists():
+        try:
+            # "rb" é aceito e exigido pelo tomllib e aceito pelo toml antigo
+            with open(caminho_arquivo, "rb") as f:
+                dados_from_config_toml = toml_parser.load(f)
 
-        dados_from_config_toml = toml.load(caminho_arquivo)
-        nome = dados_from_config_toml.get("sockpuppet_name")
+            if "sockpuppet_name" in dados_from_config_toml:
+                config.sockpuppet_name = dados_from_config_toml["sockpuppet_name"]
+            if "snapshots_dir" in dados_from_config_toml:
+                config.snapshots_dir = dados_from_config_toml["snapshots_dir"]
+            if "sockpuppet_dir" in dados_from_config_toml:
+                config.sockpuppet_dir = dados_from_config_toml["sockpuppet_dir"]
+            if "session_file" in dados_from_config_toml:
+                config.session_file = dados_from_config_toml["session_file"]
+            if "orientacao" in dados_from_config_toml:
+                config.orientacao = dados_from_config_toml["orientacao"]
+            if "partidos" in dados_from_config_toml:
+                config.partidos = dados_from_config_toml["partidos"]
 
-        if (nome != ""):
-        
-            config.sockpuppet_name = nome
-            config.snapshots_dir = dados_from_config_toml.get("snapshots_dir")
-            config.sockpuppet_dir = dados_from_config_toml.get("sockpuppet_dir")
-            config.session_file = dados_from_config_toml.get("session_file")
-            
-            # Carrega a orientação do arquivo ou aplica "neutro" se estiver vazia/ausente
-            orientacao_lida = str(dados_from_config_toml.get("orientacao", "")).strip().lower()
-            if orientacao_lida in ORIENTACOES_VALIDAS:
-                config.orientacao = orientacao_lida
-            else:
-                config.orientacao = "neutro"
-
-            # Carrega o campo partidos e o status de seguimento do TOML
-            config.partidos = dados_from_config_toml.get("partidos", "")
-            config.seguindo_usuarios_concluido = dados_from_config_toml.get("seguindo_usuarios_concluido", False)
-
-            config.quantidade_intervalos_dormindo = dados_from_config_toml.get("quantidade_intervalos_dormindo")
-            config.intervalos_em_segundos = dados_from_config_toml.get("intervalos_em_segundos")
             result = True
 
-        return result
+        except TomlError:
+            print(f"Erro de sintaxe no arquivo de configuração TOML: {caminho_arquivo}")
+        except Exception as e:
+            print(f"Erro ao carregar o arquivo de configuração: {e}")
+    else:
+        print(f"Arquivo de configuração não encontrado: {caminho_arquivo}")
 
-    except FileNotFoundError:
-        raise RuntimeError(f"Erro: O arquivo '{caminho_arquivo}' não foi encontrado.")
-    except toml.TomlDecodeError:
-        raise ValueError(f"Erro: O arquivo '{caminho_arquivo}' está com o formato TOML inválido.")
-
+    return result
 
 
 def config_environment_using_session_file(caminho_arquivo = "config.toml"):
     # Cria um gerador que busca arquivos .json no diretório atual ('.')
-    arquivo_json = list(Path('.').glob('*.json'))
+    arquivo_json = list(Path('.').glob('tiktok_session_*.json'))
 
     result = False
 
@@ -249,8 +262,9 @@ def config_environment_using_session_file(caminho_arquivo = "config.toml"):
         sock_name = sock_name.replace("tiktok_session_","")
         sock_name = sock_name.replace(".json","")
         config.sockpuppet_name = sock_name
-        result = configure_main_var_names(caminho_arquivo)
+        result = configure_main_var_names()
         
+        '''
         #tem algo errado, existe mais de um arquivo .json neste diretório        
         if (len(arquivo_json) > 1):                    
             print("Inconsistência no diretório. Diferentes arquivos tiktok_session_*.json")            
@@ -261,7 +275,7 @@ def config_environment_using_session_file(caminho_arquivo = "config.toml"):
 
             is_dir_existis(config.snapshots_dir)
             is_dir_existis(config.sockpuppet_dir)
-        
+         '''
     else:
         print("Iniciaremos a configuração do ambiente.")
     
@@ -278,8 +292,102 @@ def is_sockpuppet_environment_configured():
     return result
 
 
+def is_sessao_valida() -> bool:
+    """
+    Verifica se a pasta de dados do perfil do navegador ou o arquivo de sessão
+    existem e possuem conteúdo, garantindo que o sockpuppet tem uma sessão ativa.
+    """
+    global config
+
+    caminho_dir = Path(config.sockpuppet_dir)
+    caminho_json = Path(config.session_file)
+
+    # Verifica se o diretório do navegador existe e não está vazio
+    dir_valido = caminho_dir.exists() and any(caminho_dir.iterdir())
+    
+    # Verifica se o arquivo .json de sessão existe
+    json_valido = caminho_json.exists() and caminho_json.stat().st_size > 0
+
+    if not (dir_valido or json_valido):
+        print("\n" + "!" * 80)
+        print(" [ERRO DE SESSÃO] Nenhuma sessão válida encontrada para este Sockpuppet!")
+        print(f" Diretório esperado: {config.sockpuppet_dir}")
+        print(f" Arquivo de sessão esperado: {config.session_file}")
+        print(" [AÇÃO] Execute o setup inicial de login para autenticar o perfil.")
+        print("!" * 80 + "\n")
+        return False
+
+    return True
+
+
+async def verificar_login_ativo() -> bool:
+    """
+    Acessa o TikTok e verifica se existe uma sessão autenticada ativa,
+    checando a presença de cookies de sessão e elementos do DOM pós-login.
+    """
+    if not config or not config.sockpuppet_dir:
+        return False
+
+    print("[+] Verificando se a sessão do TikTok está autenticada...")
+
+    async with async_playwright() as p:
+        try:
+            context = await p.chromium.launch_persistent_context(
+                user_data_dir=config.sockpuppet_dir,
+                channel="chrome",
+                headless=True,  # Checagem silenciosa em segundo plano
+                args=["--disable-blink-features=AutomationControlled", "--no-sandbox"]
+            )
+
+            page = context.pages[0] if context.pages else await context.new_page()
+            
+            # 1. Checa a presença dos cookies essenciais de sessão no context
+            cookies = await context.cookies("https://www.tiktok.com")
+            nomes_cookies = [c["name"] for c in cookies]
+            tem_cookie_sessao = any(name in nomes_cookies for name in ["sessionid", "sessionid_ss", "sid_tt", "sid_guard"])
+
+            if not tem_cookie_sessao:
+                print("[-] Nenhum cookie de autenticação (sessionid) foi localizado no perfil.")
+                await context.close()
+                return False
+
+            # 2. Confirma a sessão acessando a Home do TikTok
+            await page.goto("https://www.tiktok.com/foryou", wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(3.0)
+
+            # 3. Busca no DOM por elementos exclusivos de contas logadas
+            # Ex: Avatar do perfil, menu de conta ou botão de upload de vídeo
+            esta_logado = await page.evaluate("""
+                () => {
+                    const avatar = document.querySelector('header avatar-container, [data-e2e="profile-icon"], img[class*="avatar"]');
+                    const uploadBtn = document.querySelector('a[href*="/upload"], [data-e2e="upload-icon"]');
+                    const loginBtn = document.querySelector('[data-e2e="top-login-button"]');
+                    
+                    // Se o botão de login NÃO estiver visível e existir avatar/upload, o login está ativo
+                    if (loginBtn && loginBtn.offsetWidth > 0 && loginBtn.offsetHeight > 0) {
+                        return false;
+                    }
+                    return (avatar !== null || uploadBtn !== null);
+                }
+            """)
+
+            await context.close()
+
+            if esta_logado:
+                print("[✓] Login no TikTok confirmado e ativo!")
+                return True
+            else:
+                print("[-] A página carregou, mas a conta parece estar deslogada.")
+                return False
+
+        except Exception as e:
+            print(f"[-] Erro ao verificar estado do login: {e}")
+            return False
+
+
 if __name__ == "__main__":
 
+    # 1. Carrega e valida a configuração básica do ambiente (.toml ou .json)
     if (not is_sockpuppet_environment_configured()):
         print("Configurando o ambiente do sockpuppet-audit.")
         
@@ -289,11 +397,30 @@ if __name__ == "__main__":
         else:
             raise ValueError("Erro de configuração do sockpuppet durante o login")
 
-    # Executa a etapa de SEGUIR OS PERFIS (Caso ainda não tenha sido concluída)
+    # 2. TRAVA DE SEGURANÇA E REDIRECIONAMENTO DE LOGIN
+    loginSockTikTok.setup_sockpuppet_vars(config)
+    sessao_ativa = asyncio.run(verificar_login_ativo())
+
+    if not sessao_ativa:
+        print("\n" + "!" * 80)
+        print(" [SESSÃO NÃO ENCONTRADA OU EXPIRADA] Sockpuppet deslogado do TikTok.")
+        print(" [AÇÃO] Abrindo a janela do navegador para realizar a autenticação...")
+        print("!" * 80 + "\n")
+        
+        # Redireciona para a rotina de login
+        asyncio.run(loginSockTikTok.setup_sockpuppet_session())
+        
+        # Revalida após a tentativa de login
+        if not asyncio.run(verificar_login_ativo()):
+            print("[-] Falha na autenticação. Encerrando execução.")
+            exit(1)
+
+    # 3. Executa a etapa de SEGUIR OS PERFIS (caso pendente)
     if not getattr(config, "seguindo_usuarios_concluido", False):
         seguirUsuariosSock.setup_sockpuppet_vars(config)
         asyncio.run(seguirUsuariosSock.executar_seguir_usuarios())
 
+    # 4. Dispara a coleta em loop na timeline
     # Atualiza variáveis globais e dispara a coleta em loop
     sockTimeline.setup_sockpuppet_vars(config)
     asyncio.run(sockTimeline.setup_sockpuppet_in_loop())
