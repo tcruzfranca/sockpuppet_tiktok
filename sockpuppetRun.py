@@ -237,6 +237,8 @@ def config_environment_using_config_file(caminho_arquivo = "config.toml"):
                 config.orientacao = dados_from_config_toml["orientacao"]
             if "partidos" in dados_from_config_toml:
                 config.partidos = dados_from_config_toml["partidos"]
+            if "seguindo_usuarios_concluido" in dados_from_config_toml:
+                config.seguindo_usuarios_concluido = dados_from_config_toml["seguindo_usuarios_concluido"]
 
             result = True
 

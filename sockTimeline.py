@@ -280,6 +280,9 @@ async def main():
                                 # Posição sequencial em que o elemento foi efetivamente renderizado na tela (DOM).
                                 "visual_feed_index": None,
 
+                                # Adicione esta linha para salvar o partido avaliado pelo cache no JSON do post:
+                                "partido": partido_autor,
+
                                 # Objeto com dados do perfil do criador do conteúdo
                                 "author": {
                                     # Handle público do perfil do autor (o nome com '@').
@@ -459,8 +462,8 @@ async def main():
         posts_coletados = list(captured_items.values())
         
         # Filtra considerando apenas as 50 primeiras contas válidas do PT e PL
-        candidatos_pt = [p for p in posts_coletados if p["partido"] == "PT" and p["author"].lower() in CONTAS_VALIDAS_PT]
-        candidatos_pl = [p for p in posts_coletados if p["partido"] == "PL" and p["author"].lower() in CONTAS_VALIDAS_PL]
+        candidatos_pt = [p for p in posts_coletados if p["partido"] == "PT" and p["author"]["uniqueId"].lower() in CONTAS_VALIDAS_PT]
+        candidatos_pl = [p for p in posts_coletados if p["partido"] == "PL" and p["author"]["uniqueId"].lower() in CONTAS_VALIDAS_PL]
 
         orientacao = getattr(config, "orientacao", "neutro").lower()
         partido_alvo = getattr(config, "partidos", "").upper()
